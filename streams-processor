@@ -1,0 +1,2 @@
+#! /bin/sh
+java -cp target/streams_store-1.0-SNAPSHOT.jar com.bakdata.streams_store.App $@

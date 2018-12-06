@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: streams-processor-configmap
+data:
+  streams-processor.properties: |
+    bootstrap.servers=kafka:9092
+    num.standby.replicas=1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streams-processor
+  labels:
+    app: streams-processor
+spec:
+  replicas: 9
+  selector:
+    matchLabels:
+      app: streams-processor
+  template:
+    metadata:
+      labels:
+        app: streams-processor
+    spec:
+      volumes:
+      - name: streams-processor-config
+        configMap:
+          name: streams-processor-configmap
+      containers:
+      - name: streams-processor
+        image: <TODO -- insert the image name here>
+        workingDir: /app
+        command: ["./streams-processor"]
+        args:
+          - --topic
+          - messages
+          - --producer.config
+          - /var/config/streams-processor.properties
+          - --application-id
+          - my-streams-processor
+          - --hostname
+          - $(POD_IP)
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: rest-api
+        volumeMounts:
+        - name: streams-processor-config
+          mountPath: /var/config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: streams-processor
+  labels:
+    app: streams-processor
+spec:
+  type: LoadBalancer
+  selector:
+    app: streams-processor
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+    name: rest-api
