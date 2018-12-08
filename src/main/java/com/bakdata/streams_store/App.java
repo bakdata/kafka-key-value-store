@@ -41,21 +41,21 @@ public class App {
             hostName = res.getString("hostname");
             port = res.getInt("port");
             String applicationId = res.getString("applicationId");
-            List<String> producerProps = res.getList("producerConfig");
-            String producerConfig = res.getString("producerConfigFile");
+            List<String> streamsProps = res.getList("streamsConfig");
+            String streamsConfig = res.getString("streamsConfigFile");
 
-            if (producerProps == null && producerConfig == null) {
-                throw new ArgumentParserException("Either --producer-props or --producer.config must be specified.", parser);
+            if (streamsProps == null && streamsConfig == null) {
+                throw new ArgumentParserException("Either --streams-props or --streams.config must be specified.", parser);
             }
 
-            if (producerConfig != null) {
-                try (InputStream propStream = Files.newInputStream(Paths.get(producerConfig))) {
+            if (streamsConfig != null) {
+                try (InputStream propStream = Files.newInputStream(Paths.get(streamsConfig))) {
                     props.load(propStream);
                 }
             }
 
-            if (producerProps != null) {
-                for (String prop : producerProps) {
+            if (streamsProps != null) {
+                for (String prop : streamsProps) {
                     String[] pieces = prop.split("=");
                     if (pieces.length != 2)
                         throw new IllegalArgumentException("Invalid property: " + prop);
@@ -107,7 +107,7 @@ public class App {
         ArgumentParser parser = ArgumentParsers
                 .newFor("streams-processor").build()
                 .defaultHelp(true)
-                .description("This tool is used to interactively query values from Kafka topics");
+                .description("This Kafka Streams application is used to interactively query values from Kafka topics");
 
         parser.addArgument("--topic")
                 .action(store())
@@ -116,22 +116,22 @@ public class App {
                 .metavar("TOPIC")
                 .help("process messages from this topic");
 
-        parser.addArgument("--producer-props")
+        parser.addArgument("--streams-props")
                 .nargs("+")
                 .required(false)
                 .metavar("PROP-NAME=PROP-VALUE")
                 .type(String.class)
-                .dest("producerConfig")
-                .help("kafka producer related configuration properties like bootstrap.servers etc. " +
-                        "These configs take precedence over those passed via --producer.config.");
+                .dest("streamsConfig")
+                .help("kafka streams related configuration properties like bootstrap.servers etc. " +
+                        "These configs take precedence over those passed via --streams.config.");
 
-        parser.addArgument("--producer.config")
+        parser.addArgument("--streams.config")
                 .action(store())
                 .required(false)
                 .type(String.class)
                 .metavar("CONFIG-FILE")
-                .dest("producerConfigFile")
-                .help("producer config properties file.");
+                .dest("streamsConfigFile")
+                .help("streams config properties file.");
 
         parser.addArgument("--application-id")
                 .action(store())
